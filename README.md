@@ -50,12 +50,12 @@ A clean, minimalist VS Code extension to help you stay hydrated while coding! Fe
 
 Access these commands from the Command Palette (Ctrl+Shift+P / Cmd+Shift+P):
 
-- `Water Reminder: Start Timer` - Start or resume the countdown
-- `Water Reminder: Pause Timer` - Pause the current countdown
-- `Water Reminder: Reset Timer` - Reset to default interval
-- `Water Reminder: Log Water Intake` - Log water intake and restart timer
-- `Water Reminder: Open Retro View` - Open the main water reminder webview
-- `Water Reminder: Reset Daily Count` - Reset today's water count
+- `Start Water Timer` - Start or resume the countdown
+- `Pause Water Timer` - Pause the current countdown
+- `Reset Water Timer` - Reset to default interval
+- `💧 Log Water Intake` - Log water intake and restart timer
+- `Open Retro Timer View` - Open the main water reminder webview
+- `Reset Daily Water Count` - Reset today's water count
 
 ## ⚙️ Settings
 
