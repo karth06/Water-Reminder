@@ -6,7 +6,7 @@ A clean, minimalist VS Code extension to help you stay hydrated while coding! Fe
 
 ## ✨ Features
 
-- ⏰ **Customizable Timer** - Set reminders at your preferred intervals (default: 30 minutes, configurable 1-240 minutes)
+- ⏰ **Customizable Timer** - Set reminders at your preferred intervals (default: 30 minutes, configurable 30-60 minutes)
 - 🎨 **4 Beautiful Themes** - Dark, Light, Ocean, and Forest themes with smooth transitions
 - 🌊 **Gradient Animations** - Eye-catching animated gradients on quote displays
 - 📊 **Daily Progress Tracking** - Track your water intake, reach your daily goal, and build streaks
@@ -63,7 +63,7 @@ Customize the extension in VS Code Settings:
 
 ```json
 {
-  // Timer interval in minutes (1-240)
+  // Timer interval in minutes (30-60)
   "waterReminder.intervalMinutes": 30,
   
   // Auto-start timer after drinking water
