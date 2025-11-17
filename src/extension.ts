@@ -183,12 +183,12 @@ async function showWaterReminder(context: vscode.ExtensionContext) {
     const action = await vscode.window.showWarningMessage(
         '💧 Time to drink water! Stay hydrated! 💧',
         { modal: false },
-        'I Drank Water',
+        '💧 Log Water Intake',
         'Snooze 5 min',
         'Open Retro View'
     );
 
-    if (action === 'I Drank Water') {
+    if (action === '💧 Log Water Intake') {
         vscode.commands.executeCommand('waterReminder.drankWater');
     } else if (action === 'Snooze 5 min') {
         timerManager.start(5);
