@@ -1,0 +1,32 @@
+# Source files
+src/**
+webview-ui/**
+build-webview.mjs
+tsconfig.json
+.vscode/**
+.gitignore
+
+# Development files
+*.md
+!README.md
+!CHANGELOG.md
+.vscode-test/**
+node_modules/**
+
+# Keep only production dependencies by excluding devDependencies
+!node_modules/react
+!node_modules/react-dom
+!node_modules/animejs
+
+# Source maps
+out/**/*.map
+
+# Git
+.git
+.github
+
+# Test files
+test/**
+jest.config.js
+*.test.ts
+*.test.js

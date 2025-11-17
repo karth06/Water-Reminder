@@ -1,0 +1,521 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { Card } from 'arcadeui';
+
+interface TimerState {
+    remainingSeconds: number;
+    totalSeconds: number;
+    isRunning: boolean;
+    isPaused: boolean;
+    dailyCount: number;
+    dailyGoal: number;
+    intervalMinutes: number;
+}
+
+// @ts-ignore
+const vscode = acquireVsCodeApi();
+
+// Ripple Grid Background Component
+const RippleGrid = () => {
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: -1,
+            overflow: 'hidden',
+            background: 'var(--vscode-editor-background)'
+        }}>
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <circle cx="20" cy="20" r="1" fill="var(--vscode-editorLineNumber-foreground)" opacity="0.3">
+                            <animate attributeName="r" values="1;2;1" dur="3s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite" />
+                        </circle>
+                    </pattern>
+                    <radialGradient id="ripple1">
+                        <stop offset="0%" stopColor="var(--vscode-focusBorder)" stopOpacity="0.3">
+                            <animate attributeName="stop-opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite" />
+                        </stop>
+                        <stop offset="100%" stopColor="var(--vscode-focusBorder)" stopOpacity="0" />
+                    </radialGradient>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                <circle cx="50%" cy="50%" r="20%" fill="url(#ripple1)">
+                    <animate attributeName="r" values="20%;30%;20%" dur="6s" repeatCount="indefinite" />
+                </circle>
+            </svg>
+        </div>
+    );
+};
+
+// Glass Button with library design
+const GlassButton = ({ children, onClick, color, icon, fullWidth = false, disabled = false }: any) => {
+    const glassColors: any = {
+        blue: { 
+            bg: 'rgba(59, 130, 246, 0.1)', 
+            border: 'rgba(59, 130, 246, 0.2)', 
+            text: 'rgb(96, 165, 250)',
+            shadow: 'rgba(59, 130, 246, 0.5)'
+        },
+        red: { 
+            bg: 'rgba(239, 68, 68, 0.1)', 
+            border: 'rgba(239, 68, 68, 0.2)', 
+            text: 'rgb(248, 113, 113)',
+            shadow: 'rgba(239, 68, 68, 0.5)'
+        },
+        green: { 
+            bg: 'rgba(34, 197, 94, 0.1)', 
+            border: 'rgba(34, 197, 94, 0.2)', 
+            text: 'rgb(74, 222, 128)',
+            shadow: 'rgba(34, 197, 94, 0.5)'
+        },
+        purple: { 
+            bg: 'rgba(168, 85, 247, 0.1)', 
+            border: 'rgba(168, 85, 247, 0.2)', 
+            text: 'rgb(192, 132, 252)',
+            shadow: 'rgba(168, 85, 247, 0.5)'
+        }
+    };
+
+    const colorScheme = glassColors[color] || glassColors.blue;
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className="glass-button"
+            style={{
+                position: 'relative',
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                border: `1px solid ${colorScheme.border}`,
+                background: `linear-gradient(135deg, ${colorScheme.bg} 0%, rgba(255,255,255,0.02) 100%)`,
+                backdropFilter: 'blur(16px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                color: colorScheme.text,
+                borderRadius: '12px',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                width: fullWidth ? '100%' : 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+                boxShadow: `0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.1)`,
+                opacity: disabled ? 0.5 : 1,
+                overflow: 'hidden'
+            }}
+        >
+            {/* Glass shine effect */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                pointerEvents: 'none'
+            }} className="glass-shine" />
+            
+            <span style={{ fontSize: '16px', zIndex: 1 }}>{icon}</span>
+            <span style={{ zIndex: 1, letterSpacing: '0.3px' }}>{children}</span>
+        </button>
+    );
+};
+
+function App() {
+    const [state, setState] = useState<TimerState>({
+        remainingSeconds: 0,
+        totalSeconds: 0,
+        isRunning: false,
+        isPaused: false,
+        dailyCount: 0,
+        dailyGoal: 8,
+        intervalMinutes: 30
+    });
+
+    const [showSettings, setShowSettings] = useState(false);
+
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const message = event.data;
+            if (message.type === 'update') {
+                setState({
+                    remainingSeconds: message.remainingSeconds,
+                    totalSeconds: message.totalSeconds,
+                    isRunning: message.isRunning,
+                    isPaused: message.isPaused,
+                    dailyCount: message.dailyCount,
+                    dailyGoal: message.dailyGoal,
+                    intervalMinutes: message.intervalMinutes || 30
+                });
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        vscode.postMessage({ type: 'getState' });
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleStart = () => vscode.postMessage({ type: 'start' });
+    const handlePause = () => vscode.postMessage({ type: 'pause' });
+    const handleReset = () => vscode.postMessage({ type: 'reset' });
+    const handleDrankWater = () => vscode.postMessage({ type: 'drankWater' });
+    
+    const handleIntervalChange = (minutes: number) => {
+        vscode.postMessage({ type: 'updateInterval', intervalMinutes: minutes });
+    };
+
+    const handleGoalChange = (goal: number) => {
+        vscode.postMessage({ type: 'updateGoal', dailyGoal: goal });
+    };
+
+    const percentage = Math.min(100, Math.round((state.dailyCount / state.dailyGoal) * 100));
+    const statusText = state.isRunning && !state.isPaused ? 'Running' : 
+                       state.isPaused ? 'Paused' : 'Ready';
+    
+    const intervalPresets = [5, 15, 30, 45, 60, 90, 120];
+
+    return (
+        <>
+            <RippleGrid />
+            <style>{`
+                .glass-button:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.15);
+                }
+                .glass-button:active {
+                    transform: translateY(0);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.1);
+                }
+                .glass-button:hover .glass-shine {
+                    animation: shine 0.6s ease-in-out;
+                }
+                @keyframes shine {
+                    0% { left: -100%; }
+                    100% { left: 100%; }
+                }
+            `}</style>
+            <div style={{ 
+                padding: '32px 24px', 
+                maxWidth: '460px', 
+                margin: '0 auto', 
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                position: 'relative',
+                zIndex: 1
+            }}>
+                {/* Header */}
+                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                    <div style={{ 
+                        fontSize: '56px', 
+                        marginBottom: '12px',
+                        filter: 'drop-shadow(0 4px 12px rgba(33, 150, 243, 0.3))'
+                    }}>💧</div>
+                    <h1 style={{ 
+                        fontSize: '32px', 
+                        fontWeight: '700', 
+                        marginBottom: '8px', 
+                        color: 'var(--vscode-foreground)',
+                        letterSpacing: '-0.5px'
+                    }}>
+                        Water Reminder
+                    </h1>
+                    <p style={{ 
+                        fontSize: '14px', 
+                        color: 'var(--vscode-descriptionForeground)',
+                        opacity: 0.8
+                    }}>
+                        Stay hydrated while coding
+                    </p>
+                </div>
+
+                {/* Timer Display */}
+                <div style={{
+                    textAlign: 'center',
+                    marginBottom: '28px',
+                    padding: '32px',
+                    background: 'rgba(255,255,255,0.03)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '24px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                }}>
+                    <div style={{ 
+                        fontSize: '80px', 
+                        fontWeight: '300', 
+                        fontFamily: 'monospace',
+                        marginBottom: '12px',
+                        color: 'var(--vscode-foreground)',
+                        letterSpacing: '4px'
+                    }}>
+                        {formatTime(state.remainingSeconds)}
+                    </div>
+                    <div style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '500',
+                        color: 'var(--vscode-descriptionForeground)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '2px',
+                        opacity: 0.7
+                    }}>
+                        {statusText}
+                    </div>
+                </div>
+
+                {/* Progress Section */}
+                <div style={{
+                    marginBottom: '28px',
+                    padding: '24px',
+                    background: 'rgba(255,255,255,0.03)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255,255,255,0.08)'
+                }}>
+                    <div style={{ 
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        marginBottom: '16px',
+                        color: 'var(--vscode-descriptionForeground)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        opacity: 0.8
+                    }}>
+                        Today's Progress
+                    </div>
+                    <div style={{ 
+                        fontSize: '32px', 
+                        fontWeight: '700',
+                        textAlign: 'center',
+                        marginBottom: '16px',
+                        color: 'var(--vscode-foreground)'
+                    }}>
+                        {state.dailyCount} <span style={{ opacity: 0.5, fontSize: '24px' }}>/ {state.dailyGoal}</span>
+                    </div>
+                    <div style={{
+                        width: '100%',
+                        height: '8px',
+                        background: 'rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            width: `${percentage}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, rgba(76, 175, 80, 0.6), rgba(139, 195, 74, 0.6))',
+                            transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: `0 0 12px rgba(76, 175, 80, 0.4)`
+                        }} />
+                    </div>
+                    <div style={{ 
+                        textAlign: 'center', 
+                        marginTop: '12px', 
+                        fontSize: '12px', 
+                        fontWeight: '500',
+                        color: 'var(--vscode-descriptionForeground)',
+                        opacity: 0.7,
+                        letterSpacing: '0.5px'
+                    }}>
+                        {percentage}% Complete
+                    </div>
+                </div>
+
+                {/* Settings Toggle */}
+                <div style={{ marginBottom: '20px' }}>
+                    <GlassButton
+                        color="purple"
+                        icon="⚙️"
+                        fullWidth
+                        onClick={() => setShowSettings(!showSettings)}
+                    >
+                        {showSettings ? 'Hide Settings' : 'Show Settings'}
+                    </GlassButton>
+                </div>
+
+                {/* Settings Panel */}
+                {showSettings && (
+                    <div style={{
+                        marginTop: '20px',
+                        marginBottom: '28px',
+                        padding: '24px',
+                        background: 'rgba(255,255,255,0.03)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                    }}>
+                        {/* Interval Presets */}
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ 
+                                fontSize: '12px', 
+                                fontWeight: '600', 
+                                marginBottom: '12px', 
+                                display: 'block', 
+                                color: 'var(--vscode-descriptionForeground)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                opacity: 0.8
+                            }}>
+                                ⏰ Reminder Interval
+                            </label>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {intervalPresets.map(minutes => (
+                                    <button
+                                        key={minutes}
+                                        onClick={() => handleIntervalChange(minutes)}
+                                        style={{
+                                            padding: '10px 16px',
+                                            border: state.intervalMinutes === minutes 
+                                                ? '1.5px solid rgba(255, 152, 0, 0.5)' 
+                                                : '1px solid rgba(255,255,255,0.1)',
+                                            background: state.intervalMinutes === minutes 
+                                                ? 'rgba(255, 152, 0, 0.15)' 
+                                                : 'rgba(255,255,255,0.05)',
+                                            backdropFilter: 'blur(8px)',
+                                            color: state.intervalMinutes === minutes 
+                                                ? '#ffa726' 
+                                                : 'var(--vscode-foreground)',
+                                            borderRadius: '12px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            transition: 'all 0.2s',
+                                            opacity: state.intervalMinutes === minutes ? 1 : 0.7
+                                        }}
+                                    >
+                                        {minutes}m
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Daily Goal */}
+                        <div>
+                            <label style={{ 
+                                fontSize: '12px', 
+                                fontWeight: '600', 
+                                marginBottom: '12px', 
+                                display: 'block', 
+                                color: 'var(--vscode-descriptionForeground)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                opacity: 0.8
+                            }}>
+                                🎯 Daily Goal
+                            </label>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <button
+                                    onClick={() => state.dailyGoal > 1 && handleGoalChange(state.dailyGoal - 1)}
+                                    disabled={state.dailyGoal <= 1}
+                                    style={{
+                                        padding: '12px 18px',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'var(--vscode-foreground)',
+                                        borderRadius: '12px',
+                                        cursor: state.dailyGoal > 1 ? 'pointer' : 'not-allowed',
+                                        fontSize: '20px',
+                                        fontWeight: '600',
+                                        transition: 'all 0.2s',
+                                        opacity: state.dailyGoal > 1 ? 0.9 : 0.3
+                                    }}
+                                >
+                                    −
+                                </button>
+                                <div style={{
+                                    flex: 1,
+                                    textAlign: 'center',
+                                    fontSize: '18px',
+                                    fontWeight: '600',
+                                    padding: '12px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    backdropFilter: 'blur(8px)',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    color: 'var(--vscode-foreground)'
+                                }}>
+                                    {state.dailyGoal} glasses
+                                </div>
+                                <button
+                                    onClick={() => state.dailyGoal < 20 && handleGoalChange(state.dailyGoal + 1)}
+                                    disabled={state.dailyGoal >= 20}
+                                    style={{
+                                        padding: '12px 18px',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        backdropFilter: 'blur(8px)',
+                                        color: 'var(--vscode-foreground)',
+                                        borderRadius: '12px',
+                                        cursor: state.dailyGoal < 20 ? 'pointer' : 'not-allowed',
+                                        fontSize: '20px',
+                                        fontWeight: '600',
+                                        transition: 'all 0.2s',
+                                        opacity: state.dailyGoal < 20 ? 0.9 : 0.3
+                                    }}
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Control Buttons */}
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '10px',
+                    marginBottom: '16px'
+                }}>
+                    {state.isRunning && !state.isPaused ? (
+                        <GlassButton
+                            color="red"
+                            icon="⏸️"
+                            fullWidth
+                            onClick={handlePause}
+                        >
+                            Pause
+                        </GlassButton>
+                    ) : (
+                        <GlassButton
+                            color="blue"
+                            icon="▶️"
+                            fullWidth
+                            onClick={handleStart}
+                        >
+                            {state.isPaused ? 'Resume' : 'Start'}
+                        </GlassButton>
+                    )}
+                    <GlassButton
+                        color="red"
+                        icon="🔄"
+                        fullWidth
+                        onClick={handleReset}
+                    >
+                        Reset
+                    </GlassButton>
+                </div>
+
+                <GlassButton
+                    color="green"
+                    icon="✅"
+                    fullWidth
+                    onClick={handleDrankWater}
+                >
+                    I Drank Water!
+                </GlassButton>
+            </div>
+        </>
+    );
+}
+
+export default App;
