@@ -96,10 +96,10 @@
       "properties": {
         "waterReminder.intervalMinutes": {
           "type": "number",
-          "default": 30,
+          "default": 45,
           "minimum": 30,
-          "maximum": 60,
-          "description": "Time interval for water reminders (in minutes). Recommended: 30-60 minutes for optimal hydration."
+          "maximum": 120,
+          "description": "Time interval for water reminders (in minutes). Recommended: 30-60 minutes for optimal hydration based on scientific research."
         },
         "waterReminder.autoStart": {
           "type": "boolean",
