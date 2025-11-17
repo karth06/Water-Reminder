@@ -561,7 +561,7 @@ function App() {
 
     const percentage = Math.min(100, Math.round((state.dailyCount / state.dailyGoal) * 100));
     const statusText = state.isRunning && !state.isPaused ? 'Active' : state.isPaused ? 'Paused' : 'Ready';
-    const intervalPresets = [5, 15, 30, 45, 60, 90, 120];
+    const intervalPresets = [30, 45, 60, 90, 120];
 
     return (
         <div style={{
