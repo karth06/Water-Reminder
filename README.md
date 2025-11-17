@@ -123,17 +123,6 @@ Example quotes:
 - **Resume on Reload**: Timer and progress persist after VS Code restart
 - **Efficient Updates**: Debounced state saves to minimize storage writes
 
-## 🎮 Keyboard Shortcuts
-
-No default shortcuts are set, but you can add your own in Keyboard Shortcuts settings:
-
-```json
-{
-  "key": "ctrl+alt+w",
-  "command": "waterReminder.drankWater"
-}
-```
-
 ## 🐛 Known Issues
 
 - None currently reported! Please file an issue if you encounter any problems.
