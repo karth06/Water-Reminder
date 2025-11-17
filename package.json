@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/karth06/Water-Reminder"
   },
-  "icon": "resources/icon.png",
+  "icon": "resources/water-icon.png",
   "engines": {
     "vscode": "^1.106.0"
   },
