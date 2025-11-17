@@ -61,6 +61,8 @@ export class RetroViewProvider implements vscode.WebviewViewProvider {
                     if (wasRunning) {
                         this.timerManager.start(data.intervalMinutes);
                     }
+                    // Send confirmation back to webview
+                    this._view?.webview.postMessage({ type: 'intervalUpdated', intervalMinutes: data.intervalMinutes });
                     this.updateWebview();
                     break;
                 case 'updateGoal':

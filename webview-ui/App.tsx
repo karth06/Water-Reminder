@@ -69,56 +69,41 @@ const THEMES = {
 
 // Funny, Motivational & Quirky Water Quotes
 const WATER_QUOTES = [
-    // Funny
-    "💧 Water: Because your body isn't a raisin yet!",
-    "🏜️ Don't be a human desert - hydrate or diedrate!",
-    "🐫 Even camels drink water. Don't let them flex on you!",
-    "🧠 Your brain is 73% water. Top it up before it starts buffering!",
-    "☕ Coffee doesn't count. I know, I'm shocked too!",
-    "🎮 Drinking water is the easiest side quest. 100% completion!",
-    "🤖 Error 404: Hydration not found. Please drink water!",
-    "🍕 You can't survive on pizza alone. Add water!",
-    "🦖 Be like a T-Rex but for water - tiny arms, big gulps!",
-    "🐠 Fish are 90% water. Be more fish!",
-    
     // Motivational
-    "🌊 Stay hydrated, stay awesome!",
-    "🌈 Hydration is the foundation of good health!",
+    "💧 Stay hydrated, stay awesome!",
+    "🌊 Hydration is the foundation of good health!",
     "💪 Strong body, clear mind - it starts with water!",
     "⚡ Fuel your body with nature's perfect beverage!",
     "🚀 Launch into productivity with H2O power!",
-    "💫 Sparkle from the inside out - drink up!",
-    "🏆 Champions stay hydrated. You're a champion!",
-    "🌟 Every sip is an investment in your future self!",
+    "🌟 Sparkle from the inside out - drink up!",
+    "🎯 Champions stay hydrated. You're a champion!",
+    "💎 Every sip is an investment in your future self!",
     "🎯 Goal: Become the most hydrated version of you!",
     "💎 Treat your body like the treasure it is!",
     "🔥 Water: The original fire extinguisher for burnout!",
     "🧘 Inner peace starts with proper hydration!",
-    
+
     // Quirky
     "🦑 Be like an octopus - surrounded by water (internally)!",
     "🎪 Your cells are throwing a pool party - RSVP with water!",
-    "🌙 Water: More reliable than your Wi-Fi connection!",
+    "🌐 Water: More reliable than your Wi-Fi connection!",
     "🎨 Picasso painted, you hydrate - both are art!",
-    "🧙‍♂️ Magic potion detected: Clear, tasteless, essential!",
-    "🎵 H-2-O, H-2-O, it's off to drink we go! ♪",
+    "🔮 Magic potion detected: Clear, tasteless, essential!",
+    "🎵 H-2-O, H-2-O, it's off to drink we go!",
     "🌻 Be a well-watered plant, not a sad desk cactus!",
-    "🎭 Plot twist: The secret to life is just... water!",
+    "🔮 Plot twist: The secret to life is just... water!",
     "🔮 Fortune says: A glass of water brings clarity!",
     "🌺 Bloom like you just watered yourself (because you did)!",
-    "🦄 Unicorns drink water. Be magical like them!",
+    "🦄 Be magical like them!",
     "🎯 Achievement unlocked: Adulting with proper hydration!",
     "🌀 Water: The original life hack since 4 billion years ago!",
     "🎪 Step right up to the hydration station!",
-    "🧊 Ice ice baby... but melted! Drink up!",
     "🌊 Ride the wave of wellness - one sip at a time!",
     "💧 Drip by drip, you're doing amazing!",
     "🎁 Surprise! Your body loves water! Who knew?",
     "🌐 Stay connected to life's network: H2O!",
     "⏰ It's water o'clock somewhere! (It's here, it's now)"
-];
-
-// Smart Reminder Quotes (Funny + Professional for paused/inactive users)
+];// Smart Reminder Quotes (Funny + Professional for paused/inactive users)
 const SMART_REMINDER_QUOTES = [
     // Health & Wellness
     "💆 Fun fact: Hydration makes your skin glow! Your future self will thank you!",
@@ -326,7 +311,7 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
         if (quoteRef.current && textRef.current) {
             quoteRef.current.style.opacity = '0';
             quoteRef.current.style.transform = 'translateY(20px)';
-            
+
             requestAnimationFrame(() => {
                 if (quoteRef.current) {
                     quoteRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -352,36 +337,39 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
 
     return (
         <div ref={quoteRef} style={{
-            padding: '18px 24px', 
+            padding: '18px 24px',
             background: 'linear-gradient(135deg, rgba(107, 155, 209, 0.08) 0%, rgba(168, 197, 161, 0.08) 100%)',
-            backdropFilter: 'blur(20px)', 
+            backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            borderRadius: '18px', 
+            borderRadius: '18px',
             border: '2px solid transparent',
             backgroundImage: `linear-gradient(135deg, ${theme === 'light' ? 'rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.9)' : 'rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)'}), linear-gradient(90deg, ${COLORS.primary.base}, ${COLORS.accent.sage}, ${COLORS.accent.lavender}, ${COLORS.accent.amber}, ${COLORS.primary.base})`,
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             backgroundSize: '100% 100%, 300% 300%',
             animation: 'gradientShift 8s ease infinite',
-            textAlign: 'center', 
+            textAlign: 'center',
             marginBottom: '20px',
             boxShadow: `0 8px 32px ${COLORS.primary.base}26, inset 0 1px 0 rgba(255,255,255,0.1)`,
             transition: 'all 0.5s ease'
         }}>
             <p ref={textRef} style={{
-                fontSize: '13px', fontStyle: 'italic', 
+                fontSize: '13px', fontStyle: 'italic',
                 color: COLORS.neutral.text,
                 margin: 0, lineHeight: '1.7', letterSpacing: '0.4px', fontWeight: '500',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
             }}>
-                <span style={{ fontSize: '18px', flexShrink: 0 }}>{emoji}</span>
-                <span>"{text}"</span>
+                <span style={{
+                    display: 'inline-block',
+                    verticalAlign: 'baseline',
+                    lineHeight: '1',
+                    fontSize: '14px'
+                }}>"{emoji} {text}"</span>
             </p>
         </div>
     );
-};
-
-function App() {
+};function App() {
     const getRandomQuote = () => WATER_QUOTES[Math.floor(Math.random() * WATER_QUOTES.length)];
     
     const [state, setState] = useState<TimerState>({
@@ -424,10 +412,16 @@ function App() {
                     ...prev,
                     remainingSeconds: message.remainingSeconds, totalSeconds: message.totalSeconds,
                     isRunning: message.isRunning, isPaused: message.isPaused, dailyCount: message.dailyCount,
-                    // Don't update dailyGoal here - let user interactions update it optimistically
+                    // Don't update dailyGoal and intervalMinutes here - let user interactions update them optimistically
                     // dailyGoal: message.dailyGoal || 8,
-                    intervalMinutes: message.intervalMinutes || 30,
+                    // intervalMinutes: message.intervalMinutes || 30,
                     caffeineCount: message.caffeineCount || 0
+                }));
+            } else if (message.type === 'intervalUpdated') {
+                // Only update intervalMinutes when backend confirms the change
+                setState((prev: any) => ({
+                    ...prev,
+                    intervalMinutes: message.intervalMinutes
                 }));
             } else if (message.type === 'goalUpdated') {
                 // Only update dailyGoal when backend confirms the change
