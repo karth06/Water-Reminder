@@ -2,7 +2,7 @@
   "name": "water-reminder",
   "displayName": "Water Reminder",
   "description": "Stay hydrated with a clean, minimalist water reminder for VS Code!",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "karth06",
   "repository": {
     "type": "git",
