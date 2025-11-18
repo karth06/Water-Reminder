@@ -5,21 +5,24 @@ A clean, minimalist VS Code extension to help you stay hydrated while coding! Fe
 ## 📸 Screenshots
 
 ### Main Timer View
+
 ![Main Timer View](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/app-screen.png)
 *Beautiful timer interface with animated progress bar and theme selection*
 
 ### Settings Panel
+
 ![Settings Panel](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/settings-screen.png)
 *Configure reminder intervals, daily goals, and themes*
 
 ### Log Water Intake
+
 ![Log Water Intake](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/log-water-intake.png)
 *Simple and professional water intake logging*
 
 ### Smart Reminders
+
 ![Smart Reminders](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/smart-reminders-1.png)
 *Intelligent hydration reminders with motivational quotes*
-
 
 ## ✨ Features
 
