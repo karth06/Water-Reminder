@@ -9,6 +9,32 @@
     "url": "https://github.com/karth06/Water-Reminder"
   },
   "icon": "resources/water-icon.png",
+  "galleryBanner": {
+    "color": "#1e90ff",
+    "theme": "dark"
+  },
+  "screenshots": [
+    {
+      "filename": "app-screen.png",
+      "alt": "Main Timer View - Beautiful timer interface with animated progress bar and theme selection",
+      "url": "https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/app-screen.png"
+    },
+    {
+      "filename": "settings-screen.png",
+      "alt": "Settings Panel - Configure reminder intervals, daily goals, and themes",
+      "url": "https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/settings-screen.png"
+    },
+    {
+      "filename": "log-water-intake.png",
+      "alt": "Log Water Intake - Simple and professional water intake logging",
+      "url": "https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/log-water-intake.png"
+    },
+    {
+      "filename": "smart-reminders-1.png",
+      "alt": "Smart Reminders - Intelligent hydration reminders with motivational quotes",
+      "url": "https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/smart-reminders-1.png"
+    }
+  ],
   "engines": {
     "vscode": "^1.106.0"
   },
