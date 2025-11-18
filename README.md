@@ -2,7 +2,24 @@
 
 A clean, minimalist VS Code extension to help you stay hydrated while coding! Features a modern, distraction-free UI that blends seamlessly with your development environment.
 
-![Water Reminder](resources/icon.png)
+## 📸 Screenshots
+
+### Main Timer View
+![Main Timer View](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/app-screen.png)
+*Beautiful timer interface with animated progress bar and theme selection*
+
+### Settings Panel
+![Settings Panel](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/settings-screen.png)
+*Configure reminder intervals, daily goals, and themes*
+
+### Log Water Intake
+![Log Water Intake](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/log-water-intake.png)
+*Simple and professional water intake logging*
+
+### Smart Reminders
+![Smart Reminders](https://raw.githubusercontent.com/karth06/Water-Reminder/main/resources/smart-reminders-1.png)
+*Intelligent hydration reminders with motivational quotes*
+
 
 ## ✨ Features
 
@@ -98,6 +115,7 @@ The extension includes intelligent reminder notifications:
 - **Contextual Messages**: Developer humor mixed with health tips
 
 Example quotes:
+
 - "💻 Status Update: Your body.exe has stopped responding"
 - "☕ Debug tip: Before Googling that error, try hydrating"
 - "🚀 Mission critical: Fuel check required before launch"
@@ -147,7 +165,7 @@ Example quotes:
 ## 🤝 Contributing
 
 Found a bug or have a feature request? Please open an issue on GitHub at:
-https://github.com/karth06/Water-Reminder/issues
+[https://github.com/karth06/Water-Reminder/issues](https://github.com/karth06/Water-Reminder/issues)
 
 ## 📜 License
 
