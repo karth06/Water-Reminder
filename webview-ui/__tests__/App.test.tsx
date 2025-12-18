@@ -28,20 +28,20 @@ describe('Water Reminder App', () => {
 
     test('renders Start button initially', () => {
         render(<App />);
-        const startButton = screen.getByText(/Start/i);
+        const startButton = screen.getByRole('button', { name: /Start/i });
         expect(startButton).toBeInTheDocument();
     });
 
     test('renders Reset button', () => {
         render(<App />);
-        const resetButton = screen.getByText(/Reset/i);
+        const resetButton = screen.getByRole('button', { name: /Reset/i });
         expect(resetButton).toBeInTheDocument();
     });
 
-    test('renders I Drank Water button', () => {
+    test('renders Water button', () => {
         render(<App />);
-        const drankButton = screen.getByText(/I Drank Water/i);
-        expect(drankButton).toBeInTheDocument();
+        const drankButtons = screen.getAllByRole('button', { name: /Water/i });
+        expect(drankButtons.length).toBeGreaterThanOrEqual(1);
     });
 
     test('circular timer progress is rendered', () => {
@@ -62,7 +62,7 @@ describe('Water Reminder App', () => {
         render(<App />);
         const startButton = screen.getByText(/Start/i);
         const resetButton = screen.getByText(/Reset/i);
-        const drankButton = screen.getByText(/I Drank Water/i);
+        const drankButton = screen.getByText(/^Water$/i);
 
         expect(startButton).not.toBeDisabled();
         expect(resetButton).not.toBeDisabled();

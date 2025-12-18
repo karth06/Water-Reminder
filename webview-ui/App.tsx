@@ -1,4 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { ConfigProvider, theme as antTheme } from 'antd';
+import NavigationTabs from './components/NavigationTabs';
+import MedicineView from './components/MedicineView';
+import AnalyticsView from './components/AnalyticsView';
 
 // Use CSS animations only for reliability
 const anime: any = {
@@ -248,8 +252,8 @@ const CircularTimerProgress = ({ remainingSeconds, totalSeconds, dailyCount, dai
     };
 
     return (
-        <div style={{ position: 'relative', width: '180px', height: '180px', margin: '0 auto', overflow: 'visible' }}>
-            <svg width="180" height="180" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+        <div style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto', overflow: 'visible' }}>
+            <svg width="200" height="200" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
                 <defs>
                     <linearGradient id={`circleGradient-${theme}`} x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" style={{ stopColor: COLORS.primary.base, stopOpacity: 1 }}>
@@ -276,9 +280,9 @@ const CircularTimerProgress = ({ remainingSeconds, totalSeconds, dailyCount, dai
                         </feMerge>
                     </filter>
                 </defs>
-                <circle cx="90" cy="90" r={radius} stroke={COLORS.neutral.border} strokeWidth="6" fill="none" opacity="0.3" />
+                <circle cx="100" cy="100" r={radius} stroke={COLORS.neutral.border} strokeWidth="6" fill="none" opacity="0.3" />
                 <circle
-                    ref={circleRef} cx="90" cy="90" r={radius} stroke={`url(#circleGradient-${theme})`} strokeWidth="8" fill="none"
+                    ref={circleRef} cx="100" cy="100" r={radius} stroke={`url(#circleGradient-${theme})`} strokeWidth="8" fill="none"
                     strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference}
                     style={{ filter: 'url(#progressGlow)' }}
                 />
@@ -381,8 +385,17 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
     const [showStats, setShowStats] = useState(false);
     const [currentTheme, setCurrentTheme] = useState<Theme>('dark');
     const [viewMode, setViewMode] = useState<ViewMode>('normal');
-    const [stats, setStats] = useState<any>({ currentStreak: 0, totalGlasses: 0, caffeineCount: 0, longestStreak: 0, weeklyAverage: 0 });
+    const [stats, setStats] = useState<any>({ 
+        currentStreak: 0, 
+        totalGlasses: 0, 
+        caffeineCount: 0, 
+        longestStreak: 0, 
+        weeklyAverage: 0,
+        waterHistory: {} 
+    });
     const [currentQuote, setCurrentQuote] = useState(getRandomQuote());
+    const [activeTab, setActiveTab] = useState<'water' | 'medicine' | 'analytics'>('water');
+    const [medicines, setMedicines] = useState<any[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
     console.log('App component rendered', state);
@@ -437,12 +450,16 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
                     weeklyAverage: message.weeklyAverage || 0,
                     peakHours: message.peakHours || [],
                     caffeineCount: message.caffeineCount || 0,
-                    recommendedWater: message.recommendedWater || 0
+                    recommendedWater: message.recommendedWater || 0,
+                    waterHistory: message.waterHistory || {}
                 });
+            } else if (message.type === 'medicinesUpdate') {
+                setMedicines(message.medicines || []);
             }
         };
         window.addEventListener('message', handleMessage);
         vscode.postMessage({ type: 'getState' });
+        vscode.postMessage({ type: 'getMedicines' });
         return () => window.removeEventListener('message', handleMessage);
     }, []);
 
@@ -558,6 +575,16 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
     const intervalPresets = [30, 45, 60, 90, 120];
 
     return (
+        <ConfigProvider
+            theme={{
+                algorithm: currentTheme === 'light' ? antTheme.defaultAlgorithm : antTheme.darkAlgorithm,
+                token: {
+                    colorPrimary: COLORS.primary.base,
+                    colorBgContainer: currentTheme === 'light' ? '#ffffff' : '#1e293b',
+                    colorText: currentTheme === 'light' ? 'rgba(0, 0, 0, 0.88)' : 'rgba(255, 255, 255, 0.85)',
+                }
+            }}
+        >
         <div style={{
             minHeight: '100vh',
             background: theme.bg,
@@ -606,32 +633,61 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
             `}</style>
 
             <div ref={containerRef} style={{
-                padding: viewMode === 'compact' ? '16px 12px' : '24px 20px',
-                maxWidth: viewMode === 'compact' ? '360px' : '420px',
+                padding: viewMode === 'compact' ? '16px 12px' : '28px 24px',
+                maxWidth: activeTab === 'medicine' || activeTab === 'analytics' ? '600px' : (viewMode === 'compact' ? '380px' : '500px'),
                 margin: '0 auto',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
-                position: 'relative', zIndex: 1,
-                transition: 'all 0.3s ease'
+                position: 'relative', 
+                zIndex: 1,
+                transition: 'all 0.3s ease',
+                width: '100%',
+                boxSizing: 'border-box',
+                overflowX: 'hidden'
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '20px', opacity: 0 }}>
-                    <div style={{ fontSize: '42px', marginBottom: '10px', filter: 'drop-shadow(0 4px 16px rgba(107, 155, 209, 0.3))' }}>💧</div>
-                    <h1 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '4px', color: COLORS.neutral.text, letterSpacing: '-0.5px' }}>
-                        Water Reminder
-                    </h1>
-                    <p style={{ fontSize: '12px', color: COLORS.neutral.textSoft, margin: 0 }}>Stay hydrated, stay focused</p>
+                {/* Navigation Tabs */}
+                <div style={{ opacity: 0 }}>
+                    <NavigationTabs
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        theme={COLORS}
+                    />
                 </div>
 
-                <div style={{ opacity: 0 }}><QuoteDisplay quote={currentQuote} theme={currentTheme} /></div>
+                {/* Conditional Content Based on Active Tab */}
+                {activeTab === 'medicine' && (
+                    <MedicineView theme={COLORS} vscode={vscode} />
+                )}
+
+                {activeTab === 'analytics' && (
+                    <AnalyticsView 
+                        theme={COLORS} 
+                        waterHistory={stats.waterHistory} 
+                        dailyGoal={state.dailyGoal}
+                        medicines={medicines}
+                    />
+                )}
+
+                {activeTab === 'water' && (
+                    <div key="water-content">
+                        <div style={{ textAlign: 'center', marginBottom: '20px', opacity: 1 }}>
+                            <div style={{ fontSize: '42px', marginBottom: '10px', filter: 'drop-shadow(0 4px 16px rgba(107, 155, 209, 0.3))' }}>💧</div>
+                            <h1 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '4px', color: COLORS.neutral.text, letterSpacing: '-0.5px' }}>
+                                Water Reminder
+                            </h1>
+                            <p style={{ fontSize: '12px', color: COLORS.neutral.textSoft, margin: 0 }}>Stay hydrated, stay focused</p>
+                        </div>
+
+                <div style={{ opacity: 1 }}><QuoteDisplay quote={currentQuote} theme={currentTheme} /></div>
 
                 <div style={{
-                    textAlign: 'center', marginBottom: '20px', padding: '28px 20px',
+                    textAlign: 'center', marginBottom: '20px', padding: '36px 28px',
                     background: (currentTheme === 'light' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(15, 23, 42, 0.6)'),
                     backdropFilter: 'blur(20px)', 
                     WebkitBackdropFilter: 'blur(20px)', 
                     borderRadius: '24px', 
                     border: `1px solid ${COLORS.neutral.border}`,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)', 
-                    opacity: 0,
+                    opacity: 1,
                     transition: 'all 0.5s ease'
                 }}>
                     <CircularTimerProgress 
@@ -649,7 +705,7 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
 
 
 
-                <div style={{ marginBottom: '14px', opacity: 0 }}>
+                <div style={{ marginBottom: '14px', opacity: 1 }}>
                     <GlassButton variant="lavender" icon="⚙" fullWidth onClick={() => setShowSettings(!showSettings)} theme={currentTheme}>
                         {showSettings ? 'Hide Settings' : 'Show Settings'}
                     </GlassButton>
@@ -791,7 +847,7 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
                     </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px', opacity: 0 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px', opacity: 1 }}>
                     {state.isRunning && !state.isPaused ? (
                         <GlassButton variant="pause" icon="⏸" fullWidth onClick={handlePause} theme={currentTheme}>Pause</GlassButton>
                     ) : (
@@ -802,17 +858,17 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
                     <GlassButton variant="pause" icon="↻" fullWidth onClick={handleReset} theme={currentTheme}>Reset</GlassButton>
                 </div>
 
-                <div style={{ marginBottom: '12px', opacity: 0 }}>
+                <div style={{ marginBottom: '12px', opacity: 1 }}>
                     <GlassButton variant="success" icon="💧" fullWidth onClick={handleDrankWater} theme={currentTheme}>Log Water Intake</GlassButton>
                 </div>
 
-                <div style={{ marginBottom: '14px', opacity: 0 }}>
+                <div style={{ marginBottom: '14px', opacity: 1 }}>
                     <GlassButton variant="lavender" icon="☕" fullWidth onClick={() => vscode.postMessage({ type: 'logCaffeine' })} theme={currentTheme}>
                         Log Caffeine
                     </GlassButton>
                 </div>
 
-                <div style={{ marginBottom: '14px', opacity: 0 }}>
+                <div style={{ marginBottom: '14px', opacity: 1 }}>
                     <GlassButton variant="primary" icon="📊" fullWidth onClick={() => { setShowStats(!showStats); if (!showStats) vscode.postMessage({ type: 'getStats' }); }} theme={currentTheme}>
                         {showStats ? 'Hide Stats' : 'Show Stats'}
                     </GlassButton>
@@ -860,8 +916,11 @@ const QuoteDisplay = ({ quote, theme }: { quote: string; theme: Theme }) => {
                         </div>
                     </div>
                 )}
+                    </div>
+                )}
             </div>
         </div>
+        </ConfigProvider>
     );
 }
 

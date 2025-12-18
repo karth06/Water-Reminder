@@ -3,9 +3,13 @@ import { TimerManager } from './timerManager';
 import { WaterReminderViewProvider } from './sidebarProvider';
 import { RetroViewProvider } from './retroViewProvider';
 import { AchievementManager } from './achievementManager';
+import { MedicineStorageManager } from './medicineStorageManager';
+import { MedicineTimerManager } from './medicineTimerManager';
 
 let timerManager: TimerManager;
 let achievementManager: AchievementManager;
+let medicineStorageManager: MedicineStorageManager;
+let medicineTimerManager: MedicineTimerManager;
 let statusBarItem: vscode.StatusBarItem;
 let goalsMetCount: number = 0;
 
@@ -15,6 +19,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize managers
     timerManager = new TimerManager(context);
     achievementManager = new AchievementManager(context);
+    medicineStorageManager = new MedicineStorageManager(context);
+    medicineTimerManager = new MedicineTimerManager(context, medicineStorageManager);
     goalsMetCount = context.globalState.get('goalsMetCount', 0);
 
     // Create status bar item
@@ -35,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // Register retro webview view provider
-    const retroViewProvider = new RetroViewProvider(context.extensionUri, timerManager);
+    const retroViewProvider = new RetroViewProvider(context.extensionUri, timerManager, medicineStorageManager, medicineTimerManager);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(RetroViewProvider.viewType, retroViewProvider)
     );
@@ -154,6 +160,34 @@ export function activate(context: vscode.ExtensionContext) {
     // Listen for smart reminders (90 minutes when paused/stopped)
     timerManager.onSmartReminder(() => {
         showSmartReminder(context);
+    });
+
+    // Listen for medicine reminders
+    medicineTimerManager.onMedicineReminder((event) => {
+        if (event.isPreReminder) {
+            vscode.window.showInformationMessage(
+                `⏰ Reminder: Take "${event.medicine.name}" in ${event.minutesUntil} minutes`,
+                'Remind Me Later',
+                'Got It'
+            );
+        } else {
+            // Actual reminder time!
+            vscode.window.showWarningMessage(
+                `💊 Time to take "${event.medicine.name}"!`,
+                { modal: true },
+                'Taken',
+                'Snooze 10m',
+                'Skip'
+            ).then(selection => {
+                if (selection === 'Taken') {
+                    // TODO: Log medicine intake
+                    vscode.window.showInformationMessage(`✅ Marked "${event.medicine.name}" as taken. Great job!`);
+                } else if (selection === 'Snooze 10m') {
+                    // TODO: Implement snooze logic in MedicineTimerManager
+                    vscode.window.showInformationMessage(`💤 Snoozed "${event.medicine.name}" for 10 minutes.`);
+                }
+            });
+        }
     });
 
     // Welcome message
@@ -303,6 +337,9 @@ export function deactivate() {
     }
     if (achievementManager) {
         achievementManager.dispose();
+    }
+    if (medicineTimerManager) {
+        medicineTimerManager.dispose();
     }
     if (statusBarItem) {
         statusBarItem.dispose();

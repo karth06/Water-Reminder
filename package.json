@@ -145,6 +145,18 @@
           "minimum": 0,
           "maximum": 23,
           "description": "Hour of day when daily counter resets (0-23, local time). Default is 5 AM to account for sleep schedule."
+        },
+        "medicineReminder.soundEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable sound notifications for medicine reminders"
+        },
+        "medicineReminder.preNotificationMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 30,
+          "description": "Minutes before scheduled time to send pre-notification (default: 5 minutes)"
         }
       }
     }
@@ -168,8 +180,8 @@
     "@types/animejs": "^3.1.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@types/vscode": "^1.106.0",
     "@vscode/vsce": "^3.7.0",
     "esbuild": "^0.27.0",
@@ -182,8 +194,15 @@
   "license": "MIT",
   "author": "karth06",
   "dependencies": {
-    "animejs": "^4.2.2",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "@ant-design/icons": "^6.1.0",
+    "@react-three/drei": "^9.96.1",
+    "@react-three/fiber": "^8.15.12",
+    "@types/three": "^0.160.0",
+    "antd": "^5.12.0",
+    "dayjs": "^1.11.19",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-draggable": "^4.5.0",
+    "three": "^0.160.0"
   }
 }

@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { TimerManager } from './timerManager';
+import { MedicineStorageManager } from './medicineStorageManager';
+import { MedicineTimerManager } from './medicineTimerManager';
 
 export class RetroViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'waterReminder.retroView';
@@ -7,7 +9,9 @@ export class RetroViewProvider implements vscode.WebviewViewProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private timerManager: TimerManager
+        private timerManager: TimerManager,
+        private medicineStorageManager: MedicineStorageManager,
+        private medicineTimerManager: MedicineTimerManager
     ) {
         // Listen to timer updates
         this.timerManager.onTimerUpdate(() => {
@@ -94,10 +98,140 @@ export class RetroViewProvider implements vscode.WebviewViewProvider {
                 case 'previewSound':
                     vscode.commands.executeCommand('waterReminder.previewSound', data.soundType);
                     break;
+                case 'getMedicines':
+                    this.sendMedicines();
+                    break;
+                case 'saveMedicine':
+                    this.saveMedicine(data.medicine);
+                    break;
+                case 'deleteMedicine':
+                    this.deleteMedicine(data.medicineId);
+                    break;
+                case 'toggleMedicineActive':
+                    this.toggleMedicineActive(data.medicineId);
+                    break;
+                case 'toggleMedicineIntake':
+                    this.toggleMedicineIntake(data.medicineId, data.date, data.timeIndex);
+                    break;
+                // Lock System
+                case 'getLockState':
+                    this.sendLockState();
+                    break;
+                case 'setPassword':
+                    this.setPassword(data.password);
+                    break;
+                case 'lock':
+                    this.setLockState(true);
+                    break;
+                case 'unlock':
+                    this.unlock(data.password);
+                    break;
+                case 'resetPassword':
+                    this.resetPassword();
+                    break;
+                case 'setSecurityQuestions':
+                    this.setSecurityQuestions(data.questionsAndAnswers);
+                    break;
+                case 'getSecurityQuestions':
+                    this.sendSecurityQuestions();
+                    break;
+                case 'verifySecurityAnswers':
+                    this.verifySecurityAnswers(data.answers);
+                    break;
             }
         });
 
         this.updateWebview();
+    }
+
+    private async sendLockState() {
+        if (this._view) {
+            const password = await this.medicineStorageManager.getPassword();
+            const isLocked = await this.medicineStorageManager.getIsLocked();
+            this._view.webview.postMessage({
+                type: 'lockState',
+                hasPassword: !!password,
+                isLocked: isLocked
+            });
+        }
+    }
+
+    private async setPassword(password: string) {
+        await this.medicineStorageManager.setPassword(password);
+        this.sendLockState();
+    }
+
+    private async setLockState(locked: boolean) {
+        await this.medicineStorageManager.setIsLocked(locked);
+        this.sendLockState();
+    }
+
+    private async unlock(password: string) {
+        const isValid = await this.medicineStorageManager.verifyPassword(password);
+        if (isValid) {
+            await this.medicineStorageManager.setIsLocked(false);
+            this._view?.webview.postMessage({ type: 'unlockSuccess' });
+            this.sendLockState();
+        } else {
+            this._view?.webview.postMessage({ type: 'unlockFailed' });
+        }
+    }
+
+    private async resetPassword() {
+        try {
+            // Clear password, security questions, and unlock
+            await this.medicineStorageManager.setPassword('');
+            await this.medicineStorageManager.clearSecurityQuestions();
+            await this.medicineStorageManager.setIsLocked(false);
+            this.sendLockState();
+            this._view?.webview.postMessage({ type: 'passwordReset' });
+            vscode.window.showInformationMessage('🔓 Password and security questions cleared.');
+        } catch (error) {
+            console.error('[RetroViewProvider] Error resetting password:', error);
+            vscode.window.showErrorMessage('Failed to reset password');
+        }
+    }
+
+    private async setSecurityQuestions(questionsAndAnswers: Array<{question: string, answer: string}>) {
+        try {
+            await this.medicineStorageManager.setSecurityQuestions(questionsAndAnswers);
+            this._view?.webview.postMessage({ type: 'securityQuestionsSet' });
+        } catch (error) {
+            console.error('[RetroViewProvider] Error setting security questions:', error);
+            vscode.window.showErrorMessage('Failed to set security questions');
+        }
+    }
+
+    private async sendSecurityQuestions() {
+        if (this._view) {
+            try {
+                const questions = await this.medicineStorageManager.getSecurityQuestions();
+                this._view.webview.postMessage({
+                    type: 'securityQuestions',
+                    questions
+                });
+            } catch (error) {
+                console.error('[RetroViewProvider] Error getting security questions:', error);
+                this._view.webview.postMessage({
+                    type: 'securityQuestions',
+                    questions: []
+                });
+            }
+        }
+    }
+
+    private async verifySecurityAnswers(answers: string[]) {
+        try {
+            const isValid = await this.medicineStorageManager.verifySecurityAnswers(answers);
+            if (isValid) {
+                this._view?.webview.postMessage({ type: 'securityVerificationSuccess' });
+            } else {
+                this._view?.webview.postMessage({ type: 'securityVerificationFailed' });
+            }
+        } catch (error) {
+            console.error('[RetroViewProvider] Error verifying security answers:', error);
+            this._view?.webview.postMessage({ type: 'securityVerificationFailed' });
+        }
     }
 
     private sendStats() {
@@ -113,6 +247,132 @@ export class RetroViewProvider implements vscode.WebviewViewProvider {
                 caffeineCount: this.timerManager.getCaffeineCount(),
                 recommendedWater: this.timerManager.getRecommendedWaterForCaffeine()
             });
+        }
+    }
+
+    private async sendMedicines() {
+        if (this._view) {
+            try {
+                const medicines = await this.medicineStorageManager.loadMedicines();
+                this._view.webview.postMessage({
+                    type: 'medicinesUpdate',
+                    medicines
+                });
+            } catch (error) {
+                console.error('[RetroViewProvider] Error loading medicines:', error);
+                this._view.webview.postMessage({
+                    type: 'medicinesUpdate',
+                    medicines: []
+                });
+            }
+        }
+    }
+
+    private async saveMedicine(medicine: any) {
+        try {
+            const medicines = await this.medicineStorageManager.loadMedicines();
+            const existingIndex = medicines.findIndex((m: any) => m.id === medicine.id);
+            
+            if (existingIndex >= 0) {
+                // Update existing
+                medicines[existingIndex] = medicine;
+            } else {
+                // Add new
+                medicines.push(medicine);
+            }
+            
+            await this.medicineStorageManager.saveMedicines(medicines);
+            await this.medicineTimerManager.rescheduleAll();
+            this.sendMedicines();
+            
+            vscode.window.showInformationMessage(`💊 Medicine "${medicine.name}" saved successfully!`);
+        } catch (error) {
+            console.error('[RetroViewProvider] Error saving medicine:', error);
+            vscode.window.showErrorMessage('Failed to save medicine');
+        }
+    }
+
+    private async deleteMedicine(medicineId: string) {
+        try {
+            const medicines = await this.medicineStorageManager.loadMedicines();
+            const medicine = medicines.find((m: any) => m.id === medicineId);
+            const filtered = medicines.filter((m: any) => m.id !== medicineId);
+            
+            await this.medicineStorageManager.saveMedicines(filtered);
+            await this.medicineTimerManager.rescheduleAll();
+            this.sendMedicines();
+            
+            if (medicine) {
+                vscode.window.showInformationMessage(`🗑️ Medicine "${medicine.name}" deleted`);
+            }
+        } catch (error) {
+            console.error('[RetroViewProvider] Error deleting medicine:', error);
+            vscode.window.showErrorMessage('Failed to delete medicine');
+        }
+    }
+
+    private async toggleMedicineActive(medicineId: string) {
+        try {
+            const medicines = await this.medicineStorageManager.loadMedicines();
+            const medicine = medicines.find((m: any) => m.id === medicineId);
+            
+            if (medicine) {
+                medicine.isActive = !medicine.isActive;
+                await this.medicineStorageManager.saveMedicines(medicines);
+                await this.medicineTimerManager.rescheduleAll();
+                this.sendMedicines();
+                
+                const status = medicine.isActive ? 'activated' : 'paused';
+                vscode.window.showInformationMessage(`${medicine.isActive ? '✅' : '⏸️'} Medicine "${medicine.name}" ${status}`);
+            }
+        } catch (error) {
+            console.error('[RetroViewProvider] Error toggling medicine:', error);
+            vscode.window.showErrorMessage('Failed to update medicine status');
+        }
+    }
+
+    private async toggleMedicineIntake(medicineId: string, date: string, timeIndex: number) {
+        try {
+            const medicines = await this.medicineStorageManager.loadMedicines();
+            const medicine = medicines.find((m: any) => m.id === medicineId);
+            
+            if (medicine) {
+                // Initialize intakeTracking if it doesn't exist
+                if (!medicine.intakeTracking) {
+                    medicine.intakeTracking = {};
+                }
+                
+                // Initialize array for this date if it doesn't exist
+                if (!medicine.intakeTracking[date]) {
+                    medicine.intakeTracking[date] = [];
+                }
+                
+                // Toggle the intake status for this time index
+                const wasTaken = medicine.intakeTracking[date][timeIndex];
+                medicine.intakeTracking[date][timeIndex] = !wasTaken;
+                
+                // Update stock quantity if tracked
+                if (medicine.currentQuantity !== undefined) {
+                    if (!wasTaken) {
+                        // Marking as taken -> Decrement
+                        medicine.currentQuantity = Math.max(0, medicine.currentQuantity - 1);
+                        
+                        // Check for low stock alert
+                        if (medicine.refillThreshold !== undefined && medicine.currentQuantity <= medicine.refillThreshold) {
+                            vscode.window.showWarningMessage(`⚠️ Low stock alert: ${medicine.name} has ${medicine.currentQuantity} doses left.`);
+                        }
+                    } else {
+                        // Marking as untaken -> Increment
+                        medicine.currentQuantity = medicine.currentQuantity + 1;
+                    }
+                }
+                
+                await this.medicineStorageManager.saveMedicines(medicines);
+                this.sendMedicines();
+            }
+        } catch (error) {
+            console.error('[RetroViewProvider] Error toggling intake:', error);
+            vscode.window.showErrorMessage('Failed to update intake tracking');
         }
     }
 
@@ -149,7 +409,7 @@ export class RetroViewProvider implements vscode.WebviewViewProvider {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource}; connect-src https://api.quotable.io;">
     <title>Water Reminder</title>
     <style>
         body {
